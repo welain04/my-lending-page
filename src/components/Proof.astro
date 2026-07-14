@@ -1,0 +1,59 @@
+---
+// ВНИМАНИЕ: блок с placeholder-данными.
+// Методология запрещает выдумывать отзывы и цифры — замените на реальные
+// после первых 2–3 проектов (можно предложить первым клиентам скидку за отзыв).
+const stats = [
+  { value: "—", label: "проектов запущено" },
+  { value: "—", label: "средний срок запуска" },
+  { value: "—", label: "рутинных вопросов закрывает бот" },
+];
+
+const reviews = [
+  {
+    name: "Имя, ниша",
+    text: "Короткий отзыв с конкретным результатом (например: «бот закрыл 70% вопросов, я перестал сидеть в переписке»).",
+  },
+  {
+    name: "Имя, ниша",
+    text: "Второй отзыв с измеримой пользой — заявки, время ответа, сэкономленные часы.",
+  },
+];
+---
+
+<section class="border-b border-line">
+  <div class="mx-auto max-w-6xl px-5 py-16 md:py-24">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-3xl font-bold tracking-tight md:text-4xl">
+        Что говорят те, кто уже запустился
+      </h2>
+      <p class="mt-3 inline-block rounded-full border border-line px-3 py-1 text-xs font-medium text-muted">
+        Блок-заготовка — заполним реальными кейсами
+      </p>
+    </div>
+
+    <div class="mt-10 grid gap-4 sm:grid-cols-3">
+      {
+        stats.map((s) => (
+          <div class="rounded-2xl border border-dashed border-line bg-ink-soft p-6 text-center">
+            <div class="text-3xl font-bold brand-emerald">{s.value}</div>
+            <div class="mt-1 text-sm text-muted">{s.label}</div>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      {
+        reviews.map((r) => (
+          <figure class="rounded-2xl border border-dashed border-line bg-ink-soft p-6">
+            <blockquote class="leading-relaxed text-muted">“{r.text}”</blockquote>
+            <figcaption class="mt-4 flex items-center gap-3">
+              <span class="h-10 w-10 rounded-full bg-line" />
+              <span class="text-sm font-semibold text-text">{r.name}</span>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>

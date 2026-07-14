@@ -1,0 +1,172 @@
+---
+---
+
+<div
+  id="lead-modal"
+  class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+  aria-hidden="true"
+>
+  <div data-lead-overlay class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+
+  <div class="relative w-full max-w-md rounded-2xl border border-line bg-card p-6 shadow-lg">
+    <button
+      data-lead-close
+      aria-label="Закрыть"
+      class="absolute right-4 top-4 text-muted transition hover:text-text"
+    >
+      ✕
+    </button>
+
+    <div data-lead-form-wrap>
+      <h3 class="text-xl font-extrabold tracking-tight">Бесплатный разбор</h3>
+      <p class="mt-1 text-sm text-muted">
+        Оставьте контакт — свяжусь и покажу, что можно улучшить. Без обязательств.
+      </p>
+
+      <form id="lead-form" class="mt-5 space-y-3">
+        <div>
+          <label class="mb-1 block text-sm text-muted" for="lead-name">Как вас зовут</label>
+          <input
+            id="lead-name"
+            name="name"
+            type="text"
+            required
+            autocomplete="name"
+            class="w-full rounded-lg border border-line bg-ink-soft px-4 py-3 text-text outline-none transition focus:border-accent"
+            placeholder="Имя"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm text-muted" for="lead-contact">
+            Telegram или телефон
+          </label>
+          <input
+            id="lead-contact"
+            name="contact"
+            type="text"
+            required
+            class="w-full rounded-lg border border-line bg-ink-soft px-4 py-3 text-text outline-none transition focus:border-accent"
+            placeholder="@username или +7…"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm text-muted" for="lead-message">
+            Что за задача <span class="opacity-60">(необязательно)</span>
+          </label>
+          <textarea
+            id="lead-message"
+            name="message"
+            rows="3"
+            class="w-full resize-none rounded-lg border border-line bg-ink-soft px-4 py-3 text-text outline-none transition focus:border-accent"
+            placeholder="Ниша, что хочется: сайт / бот / AI-помощник"
+          ></textarea>
+        </div>
+
+        <!-- honeypot anti-spam -->
+        <input
+          type="text"
+          name="company"
+          tabindex="-1"
+          autocomplete="off"
+          class="hidden"
+          aria-hidden="true"
+        />
+
+        <button
+          type="submit"
+          data-lead-submit
+          class="w-full rounded-lg brand-solid px-6 py-3.5 text-base font-semibold transition hover:bg-brand-strong disabled:opacity-60"
+        >
+          Отправить заявку
+        </button>
+        <p data-lead-error class="hidden text-sm text-red-400"></p>
+      </form>
+    </div>
+
+    <div data-lead-success class="hidden py-6 text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent/15 text-3xl text-accent">
+        ✓
+      </div>
+      <h3 class="mt-4 text-xl font-extrabold">Заявка отправлена!</h3>
+      <p class="mt-2 text-sm text-muted">
+        Свяжусь с вами в ближайшее время. Спасибо за доверие.
+      </p>
+      <button
+        data-lead-close
+        class="mt-5 rounded-lg border border-line px-6 py-2.5 text-sm font-semibold transition hover:bg-ink-soft"
+      >
+        Закрыть
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById("lead-modal");
+  const form = document.getElementById("lead-form") as HTMLFormElement | null;
+
+  const formWrap = modal?.querySelector("[data-lead-form-wrap]") as HTMLElement | null;
+  const successWrap = modal?.querySelector("[data-lead-success]") as HTMLElement | null;
+  const errorEl = modal?.querySelector("[data-lead-error]") as HTMLElement | null;
+  const submitBtn = modal?.querySelector("[data-lead-submit]") as HTMLButtonElement | null;
+
+  function openModal() {
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  document.querySelectorAll("[data-open-lead]").forEach((btn) => {
+    btn.addEventListener("click", openModal);
+  });
+  modal?.querySelectorAll("[data-lead-close], [data-lead-overlay]").forEach((el) => {
+    el.addEventListener("click", closeModal);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeModal();
+  });
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!submitBtn || !errorEl) return;
+
+    errorEl.classList.add("hidden");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Отправляю…";
+
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    try {
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) throw new Error("bad response");
+
+      form.reset();
+      formWrap?.classList.add("hidden");
+      successWrap?.classList.remove("hidden");
+    } catch {
+      errorEl.textContent =
+        "Не удалось отправить. Напишите напрямую в Telegram или попробуйте ещё раз.";
+      errorEl.classList.remove("hidden");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Отправить заявку";
+    }
+  });
+</script>

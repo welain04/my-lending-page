@@ -1,0 +1,91 @@
+---
+// Цены пока не показываем — стоимость называется индивидуально на бесплатном разборе.
+const plans = [
+  {
+    name: "Лендинг",
+    features: [
+      "Продающий сайт с формой заявки",
+      "Готовые тексты под вашу нишу",
+      "Мобильная версия",
+      "Подключение аналитики",
+    ],
+    featured: false,
+  },
+  {
+    name: "Бот-помощник",
+    features: [
+      "Запись клиентов 24/7",
+      "Ответы на частые вопросы",
+      "Напоминания клиентам",
+      "Сегментация базы",
+    ],
+    featured: true,
+  },
+  {
+    name: "AI-помощник",
+    features: [
+      "Карманный эксперт на вашей базе знаний",
+      "Отвечает по вашим правилам и ценам",
+      "Не выдумывает — работает по фактам",
+      "Интеграция с сайтом или Telegram",
+    ],
+    featured: false,
+  },
+];
+---
+
+<section id="pricing" class="border-b border-line bg-ink-soft">
+  <div class="mx-auto max-w-6xl px-5 py-16 md:py-24">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-3xl font-bold tracking-tight md:text-4xl">Сколько это стоит</h2>
+      <p class="mt-4 text-lg text-muted">
+        Дешевле, чем один месяц зарплаты администратора, и в разы дешевле
+        агентства. Точную цену называю после бесплатного разбора — она зависит
+        от задач.
+      </p>
+    </div>
+
+    <div class="mt-12 grid items-start gap-4 md:grid-cols-3">
+      {
+        plans.map((plan) => (
+          <div
+            class={`relative rounded-2xl border bg-card p-6 ${
+              plan.featured ? "border-accent" : "border-line"
+            }`}
+          >
+            {plan.featured && (
+              <span class="absolute -top-3 left-6 rounded-full brand-solid px-3 py-1 text-xs font-semibold">
+                Популярный
+              </span>
+            )}
+            <h3 class="text-xl font-semibold">{plan.name}</h3>
+            <div class="mt-2 text-sm font-medium text-muted">Цена — индивидуально</div>
+            <ul class="mt-5 space-y-3 text-sm">
+              {plan.features.map((f) => (
+                <li class="flex items-start gap-2 text-muted">
+                  <span class="mt-0.5 brand-emerald">✓</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              data-open-lead
+              class={`mt-6 w-full rounded-lg px-5 py-3 text-sm font-semibold transition ${
+                plan.featured
+                  ? "brand-solid hover:bg-brand-strong"
+                  : "border border-line text-text hover:bg-ink-soft"
+              }`}
+            >
+              Обсудить на бесплатном разборе
+            </button>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="mx-auto mt-8 max-w-2xl text-center text-sm text-muted">
+      Один вернувшийся клиент часто окупает всю работу. А сэкономленные на рутине
+      часы вы вкладываете в бизнес.
+    </p>
+  </div>
+</section>

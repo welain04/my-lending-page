@@ -1,0 +1,45 @@
+---
+const pains = [
+  {
+    title: "Заявки уходят к конкурентам",
+    text: "Клиент написал в 22:40, вы ответили утром — он уже записался туда, где ответили за минуту.",
+  },
+  {
+    title: "Вы — сами себе секретарь",
+    text: "Целый день отвечаете на одни и те же вопросы: «сколько стоит?», «работаете в субботу?», «как записаться?».",
+  },
+  {
+    title: "Сайт стыдно показать или его нет",
+    text: "А клиенты гуглят вас перед тем, как прийти или заплатить — и делают выводы за секунды.",
+  },
+  {
+    title: "Агентство хочет 150 000 ₽ и два месяца",
+    text: "За то, что бизнесу нужно было ещё вчера. А результат увидите нескоро.",
+  },
+];
+---
+
+<section class="border-b border-line">
+  <div class="mx-auto max-w-6xl px-5 py-16 md:py-24">
+    <h2 class="text-center text-3xl font-bold tracking-tight md:text-4xl">Знакомо?</h2>
+
+    <div class="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2">
+      {
+        pains.map((p) => (
+          <div class="bg-card p-6">
+            <h3 class="flex items-center gap-2.5 text-lg font-semibold">
+              <span class="text-muted" aria-hidden="true">—</span>
+              {p.title}
+            </h3>
+            <p class="mt-2 pl-6 leading-relaxed text-muted">{p.text}</p>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="mx-auto mt-10 max-w-3xl text-center text-lg leading-relaxed text-muted">
+      Каждый пропущенный ответ — это ушедший клиент и деньги мимо кассы. А вы
+      вместо развития бизнеса разгребаете переписку.
+    </p>
+  </div>
+</section>

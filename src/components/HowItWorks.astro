@@ -1,0 +1,51 @@
+---
+const steps = [
+  {
+    n: "1",
+    title: "Бесплатный разбор",
+    text: "Созваниваемся, разбираем ваш бизнес и решаем, что даст результат быстрее всего.",
+  },
+  {
+    n: "2",
+    title: "Согласуем смысл и цену",
+    text: "Показываю структуру и фиксирую стоимость — без сюрпризов в конце.",
+  },
+  {
+    n: "3",
+    title: "Собираю на вайбкодинге",
+    text: "Первую версию видите уже через несколько дней, а не через месяцы.",
+  },
+  {
+    n: "4",
+    title: "Запуск и правки",
+    text: "Дорабатываю по вашим замечаниям и передаю готовое — вы просто начинаете получать заявки.",
+  },
+];
+---
+
+<section id="how" class="border-b border-line bg-ink-soft">
+  <div class="mx-auto max-w-6xl px-5 py-16 md:py-24">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-3xl font-bold tracking-tight md:text-4xl">
+        От заявки до запуска — за несколько дней
+      </h2>
+      <p class="mt-4 text-lg text-muted">
+        Первый результат — уже на этой неделе.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-4 md:grid-cols-4">
+      {
+        steps.map((s) => (
+          <div class="relative rounded-2xl border border-line bg-card p-6">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-soft text-lg font-bold brand-emerald">
+              {s.n}
+            </div>
+            <h3 class="mt-4 text-lg font-semibold">{s.title}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
