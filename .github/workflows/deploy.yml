@@ -34,14 +34,14 @@ jobs:
           python3 - <<'PY'
           import os
           path = "dist/api/config.php"
-          secrets = {
-              "TELEGRAM_BOT_TOKEN": os.environ.get("TELEGRAM_BOT_TOKEN", ""),
-              "TELEGRAM_CHAT_ID": os.environ.get("TELEGRAM_CHAT_ID", ""),
-              "GOOGLE_SHEET_WEBHOOK_URL": os.environ.get("GOOGLE_SHEET_WEBHOOK_URL", ""),
+          # URL веб-приложения Apps Script не является секретом (защита — по токену),
+          # поэтому фиксируем его здесь, чтобы гарантированно указывал на актуальный деплой.
+          config = {
+              "GOOGLE_SHEET_WEBHOOK_URL": "https://script.google.com/macros/s/AKfycbx8wAGP23v0Zw7M99M9QDFnGWAk6JUB2MNyfON2KCcjkjeqhW4rPwPR3DmuBu8sM8s2-w/exec",
               "GOOGLE_SHEET_TOKEN": os.environ.get("GOOGLE_SHEET_TOKEN", ""),
           }
           lines = ["<?php", "return ["]
-          for key, value in secrets.items():
+          for key, value in config.items():
               safe = value.replace("\\", "\\\\").replace("'", "\\'")
               lines.append(f"    '{key}' => '{safe}',")
           lines.append("];")
@@ -49,9 +49,6 @@ jobs:
               f.write("\n".join(lines) + "\n")
           PY
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GOOGLE_SHEET_WEBHOOK_URL: ${{ secrets.GOOGLE_SHEET_WEBHOOK_URL }}
           GOOGLE_SHEET_TOKEN: ${{ secrets.GOOGLE_SHEET_TOKEN }}
 
       - name: Deploy via FTP
