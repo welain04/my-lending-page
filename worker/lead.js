@@ -1,8 +1,7 @@
 /**
- * Cloudflare Pages Function — приём заявки.
- * Путь: POST /api/lead
+ * Обработка заявки: отправка в Telegram (+ опционально в Google-таблицу).
  *
- * Секреты (Cloudflare Pages → Settings → Environment variables):
+ * Секреты (Cloudflare → проект → Settings → Variables and Secrets):
  *   TELEGRAM_BOT_TOKEN       — токен бота от @BotFather        (обязательно)
  *   TELEGRAM_CHAT_ID         — ваш chat id (через @userinfobot)(обязательно)
  *   GOOGLE_SHEET_WEBHOOK_URL — URL веб-приложения Apps Script  (необязательно)
@@ -65,7 +64,7 @@ async function appendToSheet(env, { name, contact, message }) {
   }
 }
 
-export async function onRequestPost({ request, env }) {
+export async function handleLead(request, env) {
   let body;
   try {
     body = await request.json();
