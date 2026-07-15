@@ -45,11 +45,11 @@ const plans = [
       </p>
     </div>
 
-    <div class="mt-12 grid items-start gap-4 md:grid-cols-3">
+    <div class="mt-12 grid items-stretch gap-4 md:grid-cols-3">
       {
         plans.map((plan) => (
           <div
-            class={`relative rounded-2xl border bg-card p-6 ${
+            class={`relative flex h-full flex-col rounded-2xl border bg-card p-6 ${
               plan.featured ? "border-accent" : "border-line"
             }`}
           >
@@ -60,7 +60,7 @@ const plans = [
             )}
             <h3 class="text-xl font-semibold">{plan.name}</h3>
             <div class="mt-2 text-sm font-medium text-muted">Цена — индивидуально</div>
-            <ul class="mt-5 space-y-3 text-sm">
+            <ul class="mt-5 mb-6 space-y-3 text-sm">
               {plan.features.map((f) => (
                 <li class="flex items-start gap-2 text-muted">
                   <span class="mt-0.5 brand-emerald">✓</span>
@@ -70,7 +70,7 @@ const plans = [
             </ul>
             <button
               data-open-lead
-              class={`mt-6 w-full rounded-lg px-5 py-3 text-sm font-semibold transition ${
+              class={`mt-auto w-full rounded-lg px-5 py-3 text-sm font-semibold transition ${
                 plan.featured
                   ? "brand-solid hover:bg-brand-strong"
                   : "border border-line text-text hover:bg-ink-soft"
