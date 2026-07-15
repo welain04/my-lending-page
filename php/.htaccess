@@ -1,0 +1,18 @@
+# Красивый путь /api/lead → api/lead.php (фронтенд шлёт на /api/lead)
+RewriteEngine On
+RewriteRule ^api/lead/?$ api/lead.php [L]
+
+# Секреты формы недоступны напрямую из браузера (Apache 2.2)
+<Files "config.php">
+  Order allow,deny
+  Deny from all
+</Files>
+
+# Кэш статичных ассетов Astro (имена с хэшем — можно кэшировать надолго)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+</IfModule>
