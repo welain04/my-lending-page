@@ -76,8 +76,11 @@ function doPost(e) {
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
       sheet.appendRow(["Дата", "Имя", "Контакт", "Бюджет", "Задача"]);
-      sheet.getRange("C:C").setNumberFormat("@");
     }
+
+    // Колонки «Контакт» и «Бюджет» — всегда текст, чтобы +7…/@user
+    // не воспринимались как формула (#ERROR!). Идемпотентно.
+    sheet.getRange("C:D").setNumberFormat("@");
 
     const date = data.date ? new Date(data.date) : new Date();
     sheet.appendRow([
@@ -100,4 +103,15 @@ function out(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
     ContentService.MimeType.JSON,
   );
+}
+
+// Запустите эту функцию (▶ Выполнить), чтобы выдать разрешение
+// и проверить отправку в Telegram — придёт тестовое сообщение.
+function testTelegram() {
+  sendTelegram({
+    name: "Проверка связи",
+    contact: "@test",
+    budget: "",
+    message: "Тестовое сообщение из Apps Script",
+  });
 }
