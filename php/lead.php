@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Приём заявки с лендинга: Telegram (+ опционально Google-таблица).
+ * Приём заявки с лендинга на SpaceWeb.
  *
- * Аналог прежнего Cloudflare Worker (worker/lead.js), переписанный под
- * обычный PHP-хостинг (SpaceWeb). Секреты берутся из api/config.php,
- * который генерируется при деплое из GitHub Secrets и не лежит в git.
+ * SpaceWeb часто блокирует исходящие запросы к api.telegram.org,
+ * поэтому PHP шлёт заявку в Google Apps Script — он пишет в таблицу
+ * и отправляет уведомление в Telegram со своих серверов.
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -52,74 +52,33 @@ if ($lead['name'] === '' || $lead['contact'] === '') {
     respond(['ok' => false, 'error' => 'missing_fields'], 422);
 }
 
-$botToken = $config['TELEGRAM_BOT_TOKEN'] ?? '';
-$chatId   = $config['TELEGRAM_CHAT_ID'] ?? '';
+$webhookUrl = $config['GOOGLE_SHEET_WEBHOOK_URL'] ?? '';
+$token = $config['GOOGLE_SHEET_TOKEN'] ?? '';
 
-if ($botToken === '' || $chatId === '') {
+if ($webhookUrl === '') {
     respond(['ok' => false, 'error' => 'server_not_configured'], 500);
 }
 
-$tgOk = sendTelegram($botToken, $chatId, $lead);
-if (!$tgOk) {
-    respond(['ok' => false, 'error' => 'telegram_failed'], 502);
+$payload = json_encode([
+    'token' => $token,
+    'date' => gmdate('c'),
+    'name' => $lead['name'],
+    'contact' => $lead['contact'],
+    'budget' => $lead['budget'],
+    'message' => $lead['message'],
+], JSON_UNESCAPED_UNICODE);
+
+$response = httpPost($webhookUrl, $payload);
+if ($response === null) {
+    respond(['ok' => false, 'error' => 'webhook_unreachable'], 502);
 }
 
-// Best-effort: заявка не падает, если таблица недоступна.
-appendToSheet(
-    $config['GOOGLE_SHEET_WEBHOOK_URL'] ?? '',
-    $config['GOOGLE_SHEET_TOKEN'] ?? '',
-    $lead
-);
+$decoded = json_decode($response['body'], true);
+if ($response['status'] < 200 || $response['status'] >= 300 || !is_array($decoded) || empty($decoded['ok'])) {
+    respond(['ok' => false, 'error' => 'webhook_failed'], 502);
+}
 
 respond(['ok' => true]);
-
-function escapeHtml(string $s): string
-{
-    return str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $s);
-}
-
-function sendTelegram(string $botToken, string $chatId, array $lead): bool
-{
-    $text = "<b>🚀 Новая заявка на разбор</b>\n\n"
-        . '<b>Имя:</b> ' . escapeHtml($lead['name']) . "\n"
-        . '<b>Контакт:</b> ' . escapeHtml($lead['contact']) . "\n"
-        . ($lead['budget'] !== '' ? '<b>Бюджет:</b> ' . escapeHtml($lead['budget']) . "\n" : '')
-        . ($lead['message'] !== '' ? '<b>Задача:</b> ' . escapeHtml($lead['message']) . "\n" : '')
-        . "\n<i>" . date('d.m.Y, H:i:s') . '</i>';
-
-    $payload = json_encode([
-        'chat_id' => $chatId,
-        'text' => $text,
-        'parse_mode' => 'HTML',
-        'disable_web_page_preview' => true,
-    ], JSON_UNESCAPED_UNICODE);
-
-    $response = httpPost(
-        "https://api.telegram.org/bot{$botToken}/sendMessage",
-        $payload
-    );
-
-    return $response !== null && $response['status'] >= 200 && $response['status'] < 300;
-}
-
-function appendToSheet(string $webhookUrl, string $token, array $lead): void
-{
-    if ($webhookUrl === '') {
-        return;
-    }
-
-    $payload = json_encode([
-        'token' => $token,
-        'date' => gmdate('c'),
-        'name' => $lead['name'],
-        'contact' => $lead['contact'],
-        'budget' => $lead['budget'],
-        'message' => $lead['message'],
-    ], JSON_UNESCAPED_UNICODE);
-
-    // Ошибку глотаем — Telegram остаётся основным каналом.
-    httpPost($webhookUrl, $payload);
-}
 
 /**
  * @return array{status:int, body:string}|null
@@ -134,7 +93,7 @@ function httpPost(string $url, string $jsonBody): ?array
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_TIMEOUT => 15,
+            CURLOPT_TIMEOUT => 20,
         ]);
         $body = curl_exec($ch);
         if ($body === false) {
@@ -146,13 +105,12 @@ function httpPost(string $url, string $jsonBody): ?array
         return ['status' => $status, 'body' => (string) $body];
     }
 
-    // Фолбэк, если cURL недоступен на хостинге.
     $context = stream_context_create([
         'http' => [
             'method' => 'POST',
             'header' => "Content-Type: application/json\r\n",
             'content' => $jsonBody,
-            'timeout' => 15,
+            'timeout' => 20,
             'ignore_errors' => true,
         ],
     ]);
