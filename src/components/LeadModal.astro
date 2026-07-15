@@ -53,6 +53,7 @@
             placeholder="@username или +7…"
           />
           <p data-field-error="contact" class="mt-1 hidden text-xs text-red-400"></p>
+        </div>
 
         <div>
           <label class="mb-1 block text-sm text-muted" for="lead-message">
@@ -232,16 +233,7 @@
     if (national.startsWith("7")) national = national.slice(1);
 
     if (national.length !== 10) return "Введите номер полностью: +7 (XXX) XXX-XX-XX";
-    if (national[0] !== "9") return "Мобильный номер РФ начинается с 9";
     return "";
-  }
-
-  function openModal() {
-    if (!modal) return;
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
   }
 
   function closeModal() {
@@ -251,6 +243,18 @@
     modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
     clearFieldErrors();
+    formWrap?.classList.remove("hidden");
+    successWrap?.classList.add("hidden");
+  }
+
+  function openModal() {
+    if (!modal) return;
+    formWrap?.classList.remove("hidden");
+    successWrap?.classList.add("hidden");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
   }
 
   nameInput?.addEventListener("input", () => {
