@@ -15,6 +15,14 @@
 const TOKEN = "CHANGE_ME_длинная_секретная_строка";
 const SHEET_NAME = "Заявки";
 
+// Google Sheets воспринимает +, =, -, @ в начале ячейки как формулу → #ERROR!
+function sheetText(value) {
+  const s = String(value ?? "");
+  if (!s) return "";
+  if (/^[=+\-@]/.test(s)) return "'" + s;
+  return s;
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
@@ -28,10 +36,17 @@ function doPost(e) {
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
       sheet.appendRow(["Дата", "Имя", "Контакт", "Бюджет", "Задача"]);
+      sheet.getRange("C:C").setNumberFormat("@");
     }
 
     const date = data.date ? new Date(data.date) : new Date();
-    sheet.appendRow([date, data.name || "", data.contact || "", data.budget || "", data.message || ""]);
+    sheet.appendRow([
+      date,
+      data.name || "",
+      sheetText(data.contact),
+      sheetText(data.budget),
+      data.message || "",
+    ]);
 
     return out({ ok: true });
   } catch (err) {
