@@ -20,11 +20,12 @@ const escapeHtml = (s = "") =>
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-async function sendTelegram(env, { name, contact, message }) {
+async function sendTelegram(env, { name, contact, budget, message }) {
   const text =
     `<b>🚀 Новая заявка на разбор</b>\n\n` +
     `<b>Имя:</b> ${escapeHtml(name)}\n` +
     `<b>Контакт:</b> ${escapeHtml(contact)}\n` +
+    (budget ? `<b>Бюджет:</b> ${escapeHtml(budget)}\n` : "") +
     (message ? `<b>Задача:</b> ${escapeHtml(message)}\n` : "") +
     `\n<i>${new Date().toLocaleString("ru-RU")}</i>`;
 
@@ -45,7 +46,7 @@ async function sendTelegram(env, { name, contact, message }) {
 }
 
 // Best-effort: не роняет заявку, если таблица недоступна.
-async function appendToSheet(env, { name, contact, message }) {
+async function appendToSheet(env, { name, contact, budget, message }) {
   if (!env.GOOGLE_SHEET_WEBHOOK_URL) return;
   try {
     await fetch(env.GOOGLE_SHEET_WEBHOOK_URL, {
@@ -56,6 +57,7 @@ async function appendToSheet(env, { name, contact, message }) {
         date: new Date().toISOString(),
         name,
         contact,
+        budget,
         message,
       }),
     });
@@ -80,6 +82,7 @@ export async function handleLead(request, env) {
   const lead = {
     name: String(body.name || "").trim().slice(0, 200),
     contact: String(body.contact || "").trim().slice(0, 200),
+    budget: String(body.budget || "").trim().slice(0, 30),
     message: String(body.message || "").trim().slice(0, 2000),
   };
 

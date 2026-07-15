@@ -27,11 +27,11 @@ function doPost(e) {
     let sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
-      sheet.appendRow(["Дата", "Имя", "Контакт", "Задача"]);
+      sheet.appendRow(["Дата", "Имя", "Контакт", "Бюджет", "Задача"]);
     }
 
     const date = data.date ? new Date(data.date) : new Date();
-    sheet.appendRow([date, data.name || "", data.contact || "", data.message || ""]);
+    sheet.appendRow([date, data.name || "", data.contact || "", data.budget || "", data.message || ""]);
 
     return out({ ok: true });
   } catch (err) {

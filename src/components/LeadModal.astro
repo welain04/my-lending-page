@@ -56,6 +56,22 @@
         </div>
 
         <div>
+          <label class="mb-1 block text-sm text-muted" for="lead-budget">
+            Ваш бюджет, ₽ <span class="opacity-60">(необязательно)</span>
+          </label>
+          <input
+            id="lead-budget"
+            name="budget"
+            type="text"
+            maxlength="30"
+            inputmode="decimal"
+            class="w-full rounded-lg border border-line bg-ink-soft px-4 py-3 text-text outline-none transition focus:border-accent"
+            placeholder="50 000 или 30 000 – 80 000"
+          />
+          <p data-field-error="budget" class="mt-1 hidden text-xs text-red-400"></p>
+        </div>
+
+        <div>
           <label class="mb-1 block text-sm text-muted" for="lead-message">
             Что за задача <span class="opacity-60">(необязательно)</span>
           </label>
@@ -112,6 +128,9 @@
   const form = document.getElementById("lead-form") as HTMLFormElement | null;
   const nameInput = document.getElementById("lead-name") as HTMLInputElement | null;
   const contactInput = document.getElementById("lead-contact") as HTMLInputElement | null;
+  const budgetInput = document.getElementById("lead-budget") as HTMLInputElement | null;
+
+  const fieldInputs = { name: nameInput, contact: contactInput, budget: budgetInput } as const;
 
   const formWrap = modal?.querySelector("[data-lead-form-wrap]") as HTMLElement | null;
   const successWrap = modal?.querySelector("[data-lead-success]") as HTMLElement | null;
@@ -123,10 +142,12 @@
   const NAME_CHARS = /[a-zA-Z\u0400-\u04FF]/;
   const NAME_FILTER = /[^a-zA-Z\u0400-\u04FF\s\-']/g;
   const TG_USER = /^@?[a-zA-Z][a-zA-Z0-9_]{4,31}$/;
+  const BUDGET_MAX = 30;
+  const BUDGET_FILTER = /[^\d\s₽рР.,\-–—a-zA-Zа-яА-ЯёЁ]/g;
 
-  function fieldError(field: "name" | "contact", msg = "") {
+  function fieldError(field: keyof typeof fieldInputs, msg = "") {
     const el = modal?.querySelector(`[data-field-error="${field}"]`) as HTMLElement | null;
-    const input = field === "name" ? nameInput : contactInput;
+    const input = fieldInputs[field];
     if (!el || !input) return;
     if (msg) {
       el.textContent = msg;
@@ -141,7 +162,20 @@
   function clearFieldErrors() {
     fieldError("name");
     fieldError("contact");
+    fieldError("budget");
     errorEl?.classList.add("hidden");
+  }
+
+  function sanitizeBudget(value: string) {
+    return value.replace(BUDGET_FILTER, "").slice(0, BUDGET_MAX);
+  }
+
+  function validateBudget(value: string) {
+    const v = value.trim();
+    if (!v) return "";
+    if (!/\d/.test(v)) return "Укажите сумму хотя бы одной цифрой";
+    if (v.length > BUDGET_MAX) return `Не больше ${BUDGET_MAX} символов`;
+    return "";
   }
 
   function sanitizeName(value: string) {
@@ -288,6 +322,15 @@
     fieldError("contact", err);
   });
 
+  budgetInput?.addEventListener("input", () => {
+    budgetInput.value = sanitizeBudget(budgetInput.value);
+    fieldError("budget");
+  });
+
+  budgetInput?.addEventListener("blur", () => {
+    fieldError("budget", validateBudget(budgetInput.value));
+  });
+
   document.querySelectorAll("[data-open-lead]").forEach((btn) => {
     btn.addEventListener("click", openModal);
   });
@@ -306,9 +349,11 @@
 
     const nameErr = validateName(nameInput.value);
     const contactErr = validateContact(contactInput.value);
+    const budgetErr = budgetInput ? validateBudget(budgetInput.value) : "";
     if (nameErr) fieldError("name", nameErr);
     if (contactErr) fieldError("contact", contactErr);
-    if (nameErr || contactErr) return;
+    if (budgetErr) fieldError("budget", budgetErr);
+    if (nameErr || contactErr || budgetErr) return;
 
     errorEl.classList.add("hidden");
     submitBtn.disabled = true;
@@ -324,6 +369,7 @@
     const data = {
       name: nameInput.value.trim(),
       contact: contactNormalized,
+      budget: budgetInput?.value.trim() || "",
       message: (form.querySelector("#lead-message") as HTMLTextAreaElement)?.value.trim() || "",
       company: (form.querySelector('[name="company"]') as HTMLInputElement)?.value || "",
     };
