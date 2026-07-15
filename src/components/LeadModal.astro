@@ -32,9 +32,11 @@
             type="text"
             required
             autocomplete="name"
+            maxlength="80"
             class="w-full rounded-lg border border-line bg-ink-soft px-4 py-3 text-text outline-none transition focus:border-accent"
             placeholder="Имя"
           />
+          <p data-field-error="name" class="mt-1 hidden text-xs text-red-400"></p>
         </div>
 
         <div>
@@ -46,10 +48,11 @@
             name="contact"
             type="text"
             required
+            inputmode="text"
             class="w-full rounded-lg border border-line bg-ink-soft px-4 py-3 text-text outline-none transition focus:border-accent"
             placeholder="@username или +7…"
           />
-        </div>
+          <p data-field-error="contact" class="mt-1 hidden text-xs text-red-400"></p>
 
         <div>
           <label class="mb-1 block text-sm text-muted" for="lead-message">
@@ -106,11 +109,132 @@
 <script>
   const modal = document.getElementById("lead-modal");
   const form = document.getElementById("lead-form") as HTMLFormElement | null;
+  const nameInput = document.getElementById("lead-name") as HTMLInputElement | null;
+  const contactInput = document.getElementById("lead-contact") as HTMLInputElement | null;
 
   const formWrap = modal?.querySelector("[data-lead-form-wrap]") as HTMLElement | null;
   const successWrap = modal?.querySelector("[data-lead-success]") as HTMLElement | null;
   const errorEl = modal?.querySelector("[data-lead-error]") as HTMLElement | null;
   const submitBtn = modal?.querySelector("[data-lead-submit]") as HTMLButtonElement | null;
+
+  const NAME_MAX = 80;
+  const NAME_MIN = 2;
+  const NAME_CHARS = /[a-zA-Z\u0400-\u04FF]/;
+  const NAME_FILTER = /[^a-zA-Z\u0400-\u04FF\s\-']/g;
+  const TG_USER = /^@?[a-zA-Z][a-zA-Z0-9_]{4,31}$/;
+
+  function fieldError(field: "name" | "contact", msg = "") {
+    const el = modal?.querySelector(`[data-field-error="${field}"]`) as HTMLElement | null;
+    const input = field === "name" ? nameInput : contactInput;
+    if (!el || !input) return;
+    if (msg) {
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      input.classList.add("border-red-400");
+    } else {
+      el.classList.add("hidden");
+      input.classList.remove("border-red-400");
+    }
+  }
+
+  function clearFieldErrors() {
+    fieldError("name");
+    fieldError("contact");
+    errorEl?.classList.add("hidden");
+  }
+
+  function sanitizeName(value: string) {
+    return value.replace(NAME_FILTER, "").slice(0, NAME_MAX);
+  }
+
+  function validateName(value: string) {
+    const v = value.trim();
+    if (v.length < NAME_MIN) return "Введите имя (минимум 2 символа)";
+    if (!NAME_CHARS.test(v)) return "Только буквы кириллицы или латиницы";
+    if (v.length > NAME_MAX) return `Не больше ${NAME_MAX} символов`;
+    return "";
+  }
+
+  function isPhoneMode(value: string) {
+    const t = value.trim();
+    if (!t) return false;
+    if (t.startsWith("@")) return false;
+    if (/^@?[a-zA-Z][a-zA-Z0-9_]*$/.test(t) && !/^[\d+(]/.test(t)) return false;
+    return /^[\d+8(]/.test(t) || t.startsWith("+7") || /^\d/.test(t);
+  }
+
+  function formatTelegram(value: string) {
+    let v = value.replace(/[^a-zA-Z0-9_@]/g, "");
+    if (v && !v.startsWith("@")) {
+      if (/^[a-zA-Z]/.test(v)) v = "@" + v;
+      else v = v.replace(/^[^a-zA-Z]+/, "");
+      if (v && !v.startsWith("@") && /^[a-zA-Z]/.test(v)) v = "@" + v;
+    }
+    if (v.startsWith("@")) {
+      const user = v.slice(1).replace(/[^a-zA-Z0-9_]/g, "").slice(0, 32);
+      v = "@" + user;
+    }
+    return v.slice(0, 33);
+  }
+
+  function formatRuPhone(raw: string) {
+    if (!raw.trim()) return "";
+
+    let digits = raw.replace(/\D/g, "");
+    if (digits.startsWith("8")) digits = "7" + digits.slice(1);
+    if (digits.startsWith("7")) digits = digits.slice(1);
+    digits = digits.slice(0, 10);
+
+    if (digits.length === 0) {
+      if (/^[+8]/.test(raw.trim())) return "+7 (";
+      return "";
+    }
+
+    let out = "+7 (" + digits.slice(0, 3);
+    if (digits.length >= 3) out += ")";
+    if (digits.length > 3) out += " " + digits.slice(3, 6);
+    if (digits.length > 6) out += "-" + digits.slice(6, 8);
+    if (digits.length > 8) out += "-" + digits.slice(8, 10);
+    return out;
+  }
+
+  function formatContact(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+
+    if (trimmed.startsWith("@") || (/^[a-zA-Z_]/.test(trimmed) && !/^[\d+8(]/.test(trimmed))) {
+      return formatTelegram(value);
+    }
+
+    if (isPhoneMode(value) || /^[\d+8(]/.test(trimmed)) {
+      return formatRuPhone(value);
+    }
+
+    return formatTelegram(value);
+  }
+
+  function validateContact(value: string) {
+    const v = value.trim();
+    if (!v) return "Укажите Telegram или телефон";
+
+    if (v.startsWith("@") || /^[a-zA-Z_]/.test(v)) {
+      const normalized = v.startsWith("@") ? v : "@" + v;
+      if (/[а-яА-ЯёЁ]/.test(v)) return "В username Telegram нет кириллицы";
+      if (!TG_USER.test(normalized)) {
+        return "Username: латиница, цифры, _, от 5 до 32 символов после @";
+      }
+      return "";
+    }
+
+    const digits = v.replace(/\D/g, "");
+    let national = digits;
+    if (national.startsWith("8")) national = "7" + national.slice(1);
+    if (national.startsWith("7")) national = national.slice(1);
+
+    if (national.length !== 10) return "Введите номер полностью: +7 (XXX) XXX-XX-XX";
+    if (national[0] !== "9") return "Мобильный номер РФ начинается с 9";
+    return "";
+  }
 
   function openModal() {
     if (!modal) return;
@@ -126,7 +250,39 @@
     modal.classList.remove("flex");
     modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
+    clearFieldErrors();
   }
+
+  nameInput?.addEventListener("input", () => {
+    const pos = nameInput.selectionStart;
+    const before = nameInput.value;
+    nameInput.value = sanitizeName(nameInput.value);
+    if (pos !== null) {
+      const diff = before.length - nameInput.value.length;
+      nameInput.setSelectionRange(Math.max(0, pos - diff), Math.max(0, pos - diff));
+    }
+    fieldError("name");
+  });
+
+  nameInput?.addEventListener("blur", () => {
+    const err = validateName(nameInput.value);
+    fieldError("name", err);
+  });
+
+  contactInput?.addEventListener("input", () => {
+    const pos = contactInput.selectionStart;
+    const before = contactInput.value;
+    contactInput.value = formatContact(contactInput.value);
+    if (pos !== null && contactInput.value.length >= before.length) {
+      contactInput.setSelectionRange(contactInput.value.length, contactInput.value.length);
+    }
+    fieldError("contact");
+  });
+
+  contactInput?.addEventListener("blur", () => {
+    const err = validateContact(contactInput.value);
+    fieldError("contact", err);
+  });
 
   document.querySelectorAll("[data-open-lead]").forEach((btn) => {
     btn.addEventListener("click", openModal);
@@ -140,13 +296,33 @@
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!submitBtn || !errorEl) return;
+    if (!submitBtn || !errorEl || !nameInput || !contactInput) return;
+
+    clearFieldErrors();
+
+    const nameErr = validateName(nameInput.value);
+    const contactErr = validateContact(contactInput.value);
+    if (nameErr) fieldError("name", nameErr);
+    if (contactErr) fieldError("contact", contactErr);
+    if (nameErr || contactErr) return;
 
     errorEl.classList.add("hidden");
     submitBtn.disabled = true;
     submitBtn.textContent = "Отправляю…";
 
-    const data = Object.fromEntries(new FormData(form).entries());
+    const contactVal = contactInput.value.trim();
+    const contactNormalized = contactVal.startsWith("@")
+      ? contactVal
+      : /^[a-zA-Z_]/.test(contactVal)
+        ? "@" + contactVal.replace(/^@/, "")
+        : contactVal;
+
+    const data = {
+      name: nameInput.value.trim(),
+      contact: contactNormalized,
+      message: (form.querySelector("#lead-message") as HTMLTextAreaElement)?.value.trim() || "",
+      company: (form.querySelector('[name="company"]') as HTMLInputElement)?.value || "",
+    };
 
     try {
       const res = await fetch("/api/lead", {
@@ -158,6 +334,7 @@
       if (!res.ok) throw new Error("bad response");
 
       form.reset();
+      clearFieldErrors();
       formWrap?.classList.add("hidden");
       successWrap?.classList.remove("hidden");
     } catch {
