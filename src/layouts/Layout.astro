@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import YandexMetrika from "../components/YandexMetrika.astro";
 
 interface Props {
   title?: string;
@@ -29,5 +30,6 @@ const {
   </head>
   <body>
     <slot />
+    <YandexMetrika />
   </body>
 </html>

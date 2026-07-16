@@ -124,6 +124,16 @@
 </div>
 
 <script>
+  const metrikaId = import.meta.env.PUBLIC_YANDEX_METRIKA_ID ?? "";
+
+  function trackLeadGoal() {
+    if (!/^\d+$/.test(metrikaId)) return;
+    const ymFn = (window as Window & { ym?: (...args: unknown[]) => void }).ym;
+    if (typeof ymFn === "function") {
+      ymFn(Number(metrikaId), "reachGoal", "lead_submit");
+    }
+  }
+
   const modal = document.getElementById("lead-modal");
   const form = document.getElementById("lead-form") as HTMLFormElement | null;
   const nameInput = document.getElementById("lead-name") as HTMLInputElement | null;
@@ -385,6 +395,7 @@
 
       form.reset();
       clearFieldErrors();
+      trackLeadGoal();
       formWrap?.classList.add("hidden");
       successWrap?.classList.remove("hidden");
     } catch {

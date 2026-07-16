@@ -1,4 +1,7 @@
-# Скопируйте в .dev.vars для локального запуска функций через `wrangler pages dev`.
+# Скопируйте в .dev.vars для локальной разработки.
+
+# Номер счётчика Яндекс.Метрики (только цифры)
+PUBLIC_YANDEX_METRIKA_ID=12345678
 # В проде эти значения задаются в Cloudflare Pages → Settings → Environment variables.
 
 TELEGRAM_BOT_TOKEN=123456:ABC-DEF...

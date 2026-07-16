@@ -23,6 +23,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          PUBLIC_YANDEX_METRIKA_ID: ${{ secrets.YANDEX_METRIKA_ID }}
 
       - name: Assemble deploy payload (PHP + .htaccess + config)
         run: |
